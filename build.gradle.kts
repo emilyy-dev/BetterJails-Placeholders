@@ -4,7 +4,7 @@ plugins {
 }
 
 project.group = "io.github.emilyy-dev"
-project.version = "1.0-SNAPSHOT"
+project.version = "1.0.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
