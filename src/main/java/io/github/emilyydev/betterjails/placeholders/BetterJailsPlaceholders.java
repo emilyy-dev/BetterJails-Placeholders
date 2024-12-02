@@ -36,6 +36,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -53,35 +54,40 @@ import static me.clip.placeholderapi.util.TimeUtil.getTime;
 
 public final class BetterJailsPlaceholders extends PlaceholderExpansion {
 
-  private static final String BETTERJAILS = "BetterJails";
-  private static final String IDENTIFIER = BETTERJAILS.toLowerCase(Locale.ROOT);
+  private static final String BETTER_JAILS = "BetterJails";
+  private static final String IDENTIFIER = BETTER_JAILS.toLowerCase(Locale.ROOT);
   private static final Map<String, Function<OfflinePlayer, String>> PLACEHOLDER_FUNCTIONS;
   private static final List<String> PLACEHOLDERS;
-  private static final Function<OfflinePlayer, String> NIL_FUNCTION = p -> null;
+  private static final Function<OfflinePlayer, String> NIL_FUNCTION = $ -> null;
   private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US);
   private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US);
 
   static {
-    PLACEHOLDER_FUNCTIONS = ImmutableMap.<String, Function<OfflinePlayer, String>>builder()
-        .put("prisoner_time_remaining", prisoner(prisoner -> getTime(between(now(), prisoner.jailedUntil()))))
-        .put("prisoner_release_date", prisoner(prisoner -> DATE_FORMATTER.format(LocalDateTime.ofInstant(prisoner.jailedUntil(), ZoneId.systemDefault()))))
-        .put("prisoner_release_time", prisoner(prisoner -> TIME_FORMATTER.format(LocalDateTime.ofInstant(prisoner.jailedUntil(), ZoneId.systemDefault()))))
-        .put("prisoner_jail_name", prisoner(prisoner -> prisoner.jail().name()))
-        .put("prisoner_jailed_by", prisoner(Prisoner::jailedBy))
-        .put("prisoner_primary_group", prisoner(Prisoner::primaryGroup))
-        .put("list_jails", player -> betterJails().getJailManager().getAllJails().stream()
-            .map(Jail::name)
-            .collect(joining(", ")))
-        .put("jail_count", player -> String.valueOf(betterJails().getJailManager().getAllJails().size()))
-        .build();
+    PLACEHOLDER_FUNCTIONS =
+        ImmutableMap.<String, Function<OfflinePlayer, String>>builder()
+            .put("prisoner_time_remaining", prisoner(prisoner -> getTime(between(now(), prisoner.jailedUntil()))))
+            .put("prisoner_release_date", prisoner(prisoner -> formatWith(prisoner.jailedUntil(), DATE_FORMATTER)))
+            .put("prisoner_release_time", prisoner(prisoner -> formatWith(prisoner.jailedUntil(), TIME_FORMATTER)))
+            .put("prisoner_jail_name", prisoner(prisoner -> prisoner.jail().name()))
+            .put("prisoner_jailed_by", prisoner(Prisoner::jailedBy))
+            .put("prisoner_primary_group", prisoner(Prisoner::primaryGroup))
+            .put("prisoner_imprisonment_reason", prisoner(Prisoner::imprisonmentReason))
+            .put("prisoner_total_sentence_time", prisoner(prisoner -> getTime(prisoner.totalSentenceTime())))
+            .put("list_jails", $ -> betterJails().getJailManager().getAllJails().stream().map(Jail::name).collect(joining(", ")))
+            .put("jail_count", $ -> String.valueOf(betterJails().getJailManager().getAllJails().size()))
+            .build();
 
-    PLACEHOLDERS = PLACEHOLDER_FUNCTIONS.keySet().stream()
-        .map(placeholder -> '%' + IDENTIFIER + '_' + placeholder + '%')
-        .collect(Collector.of(
-            ImmutableList::<String>builder,
-            ImmutableList.Builder::add,
-            (first, second) -> first.addAll(second.build()),
-            ImmutableList.Builder::build));
+    PLACEHOLDERS =
+        PLACEHOLDER_FUNCTIONS.keySet().stream()
+            .map(placeholder -> '%' + IDENTIFIER + '_' + placeholder + '%')
+            .collect(
+                Collector.of(
+                    ImmutableList::<String>builder,
+                    ImmutableList.Builder::add,
+                    (first, second) -> first.addAll(second.build()),
+                    ImmutableList.Builder::build
+                )
+            );
   }
 
   private static Function<OfflinePlayer, String> prisoner(final Function<Prisoner, String> function) {
@@ -97,6 +103,10 @@ public final class BetterJailsPlaceholders extends PlaceholderExpansion {
     return Bukkit.getServicesManager().load(BetterJails.class);
   }
 
+  private static String formatWith(final Instant instant, final DateTimeFormatter formatter) {
+    return formatter.format(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
+  }
+
   @Override
   public String onRequest(final OfflinePlayer player, final @NotNull String params) {
     return PLACEHOLDER_FUNCTIONS.getOrDefault(params, NIL_FUNCTION).apply(player);
@@ -109,7 +119,7 @@ public final class BetterJailsPlaceholders extends PlaceholderExpansion {
 
   @Override
   public @NotNull String getRequiredPlugin() {
-    return BETTERJAILS;
+    return BETTER_JAILS;
   }
 
   @Override
@@ -124,6 +134,6 @@ public final class BetterJailsPlaceholders extends PlaceholderExpansion {
 
   @Override
   public @NotNull String getVersion() {
-    return "1.0.0";
+    return "1.1.0";
   }
 }

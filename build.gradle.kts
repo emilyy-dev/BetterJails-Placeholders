@@ -3,8 +3,8 @@ plugins {
     id("com.github.hierynomus.license-base") version "0.16.1"
 }
 
-project.group = "io.github.emilyy-dev"
-project.version = "1.0.0"
+group = "io.github.emilyy-dev"
+version = "1.1.0-SNAPSHOT"
 
 java {
   toolchain {
@@ -42,6 +42,6 @@ tasks {
     }
 
     compileJava {
-        options.encoding = Charsets.UTF_8.name()
+        options.encoding = "UTF-8"
     }
 }
